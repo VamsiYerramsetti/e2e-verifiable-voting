@@ -1,22 +1,20 @@
-def generate_report(results):
+def generate_report(audit_data):
 
-    print("\n====== POST-ELECTION AUDIT REPORT ======\n")
+    report = []
 
-    if results["ledger_ok"]:
-        print("Ledger Integrity: OK")
+    if audit_data["ledger_ok"]:
+        report.append(" Ledger Integrity: OK")
     else:
-        print(" Ledger Integrity: Tampering Detected")
+        report.append(" Ledger Tampered")
 
-    print("Total Ballots Verified:", results["ballot_count"])
+    report.append(f"Total Ballots Verified: {audit_data['ballot_count']}")
 
-    tally = results["tally"]
+    report.append("\nRecomputed Tally:")
 
-    print("\nRecomputed Tally:")
-    print("Candidate A:", tally[0])
-    print("Candidate B:", tally[1])
-    print("Candidate C:", tally[2])
+    report.append(f"Candidate A: {audit_data['tally'][0]}")
+    report.append(f"Candidate B: {audit_data['tally'][1]}")
+    report.append(f"Candidate C: {audit_data['tally'][2]}")
 
-    if results["ledger_ok"]:
-        print("\nAudit Result: Election integrity verified.")
-    else:
-        print("\nAudit Result: Integrity failure detected.")
+    report.append("\nAudit Result: Election integrity verified.")
+
+    return "\n".join(report)

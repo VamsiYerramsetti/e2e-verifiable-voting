@@ -1,101 +1,132 @@
 from backend.crypto.keygen import generate_keys
 from backend.crypto.encrypt_vote import encrypt_vote
-from backend.ledger.bulletin_board import add_vote, get_ledger
 from backend.data.generate_votes import generate_votes
+from backend.ledger.bulletin_board import add_vote, get_ledger
 from backend.ledger.ledger_verify import verify_ledger
 from backend.tally.tally_votes import tally_votes
 from backend.audit.audit_engine import run_audit
 from backend.audit.audit_report import generate_report
 from backend.audit.dispute_resolution import verify_receipt
-from backend.audit.attack_simulation import simulate_ballot_deletion, simulate_ballot_modification
-SHOW_CIPHERTEXT = False   # change to True if you want to see ciphertext
+from backend.generate_receipt_pdf import generate_receipt_pdf
 
 
-
+# -----------------------------
 # 1️⃣ Generate Keys
+# -----------------------------
 public_key, private_key = generate_keys()
 
+
+# -----------------------------
 # 2️⃣ Generate Synthetic Votes
-votes = generate_votes(20)  # start small for testing
+# -----------------------------
+votes = generate_votes(20)
 
 print("Original Votes:", votes)
 
-# 3️⃣ Convert Candidate Names to Numeric Values
-candidate_map = {"A": 0, "B": 1, "C": 2}
 
-# 4️⃣ Encrypt and Store Votes (THIS IS THE VOTE LOOP)
+# -----------------------------
+# 3️⃣ Candidate Mapping
+# -----------------------------
+candidate_map = {
+    "A": 0,
+    "B": 1,
+    "C": 2
+}
+
+
+# -----------------------------
+# 4️⃣ Encrypt and Store Votes
+# -----------------------------
 receipts = []
 
 for vote in votes:
+
     numeric_vote = candidate_map[vote]
 
     cipher = encrypt_vote(public_key, numeric_vote)
 
     receipt = add_vote(cipher)
-    receipts.append(receipt)
 
-    if SHOW_CIPHERTEXT:
-        print(f"Encrypted Vote (Ciphertext): {cipher}")
+    receipts.append(receipt)
 
     print("Receipt issued:", receipt)
 
-#print("Receipt issued:", receipt)
 
-
-
-
-#-----------------------------------------------------------------------------#
-# ---- SIMULATE ATTACK ----
-#print("\nSimulating tampering attack...")
-
-#ledger = get_ledger()
-
-##if len(ledger) > 0:
-  #  ledger[0]["ciphertext"] = (999999, 999999)   # hacker edits vote
-
-#----------------------------------------------------------------------------------#
-
-
-
-
-
-# 5️⃣ Print Ledger Size
+# -----------------------------
+# 5️⃣ Ledger Size
+# -----------------------------
 ledger = get_ledger()
+
 print("\nTotal Encrypted Ballots Stored:", len(ledger))
 
+
+# -----------------------------
 # 6️⃣ Verify Ledger Integrity
+# -----------------------------
 is_valid = verify_ledger()
+
 print("\nLedger Integrity Verified:", is_valid)
 
+
+# -----------------------------
 # 7️⃣ Tally Votes
+# -----------------------------
 results = tally_votes(private_key)
 
 print("\nElection Results:")
+
 print("Candidate A:", results[0])
 print("Candidate B:", results[1])
 print("Candidate C:", results[2])
 
-# Run audit
-audit_results = run_audit(private_key)
 
-# Print audit report
-generate_report(audit_results)
+# -----------------------------
+# 8️⃣ Run Audit Engine
+# -----------------------------
+audit_results = run_audit(ledger, results)
 
-# Example dispute check
-ledger = get_ledger()
-sample_receipt = ledger[0]["receipt_id"]
+print("\n====== POST-ELECTION AUDIT REPORT ======")
 
-print("\nChecking Receipt:", sample_receipt)
+report = generate_report(audit_results)
 
-result = verify_receipt(sample_receipt)
+print(report)
 
-print("Dispute Resolution Result:")
+
+# -----------------------------
+# 9️⃣ Show Receipts in Ledger (for testing)
+# -----------------------------
+print("\nReceipts stored in ledger:")
+
+for block in ledger:
+    print(block["receipt_id"])
+
+
+# -----------------------------
+# 🔟 Receipt Verification
+# -----------------------------
+print("\n====== RECEIPT VERIFICATION ======")
+
+receipt_to_check = input("Enter your receipt ID: ").strip()
+
+result = verify_receipt(receipt_to_check)
+
+print("\nDispute Resolution Result:")
 print(result)
 
-# Simulate attacks
-#simulate_ballot_modification()
 
-#print("\nRunning Ledger Verification After Attack...")
-#is_valid = verify_ledger()
+# -----------------------------
+# 1️⃣1️⃣ Generate PDF Receipt
+# -----------------------------
+if result["status"] == "FOUND":
 
-#print("Ledger Integrity After Attack:", is_valid)
+    print("\nBallot confirmed in ledger!")
+
+    voter_name = input("Enter your name: ")
+
+    voter_id = input("Enter your voter ID: ")
+
+    generate_receipt_pdf(receipt_to_check, voter_name, voter_id)
+
+else:
+
+    print("\nReceipt not found. PDF not generated.")

@@ -1,19 +1,17 @@
-from backend.ledger.bulletin_board import get_ledger
 from backend.ledger.ledger_verify import verify_ledger
-from backend.tally.tally_votes import tally_votes
 
-def run_audit(private_key):
 
-    results = {}
+def run_audit(ledger, results):
 
-    # Check ledger integrity
-    results["ledger_ok"] = verify_ledger()
+    audit_data = {}
 
-    # Count ballots
-    ledger = get_ledger()
-    results["ballot_count"] = len(ledger)
+    # verify ledger integrity
+    audit_data["ledger_ok"] = verify_ledger()
 
-    # Recompute tally
-    results["tally"] = tally_votes(private_key)
+    # count ballots
+    audit_data["ballot_count"] = len(ledger)
 
-    return results
+    # store tally results
+    audit_data["tally"] = results
+
+    return audit_data
