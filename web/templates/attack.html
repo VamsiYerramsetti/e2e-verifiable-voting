@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Security Testing Panel</h2>
+
+<div class="card p-4 shadow mt-3">
+
+    <p>This will simulate unauthorized tampering.</p>
+
+    <form method="POST">
+        <button class="btn btn-danger">Run Attack Simulation</button>
+    </form>
+
+    {% if message %}
+        <div class="alert alert-warning mt-3">
+            {{ message }}
+        </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}
